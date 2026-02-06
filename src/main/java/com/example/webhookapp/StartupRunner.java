@@ -28,9 +28,9 @@ public class StartupRunner implements CommandLineRunner {
 
 	    String requestBody = """
 	        {
-	          "name": "John Doe",
-	          "regNo": "REG12347",
-	          "email": "john@example.com"
+	          "name": "Sakshi Pimpale",
+	          "regNo": "250850120149",
+	          "email": "sakshipimple517@gmail.com"
 	        }
 	        """;
 
@@ -40,7 +40,7 @@ public class StartupRunner implements CommandLineRunner {
 	    String response =
 	        restTemplate.postForObject(url, requestEntity, String.class);
 
-	    // 🔹 Parse JSON response
+	  
 	    ObjectMapper mapper = new ObjectMapper();
 	    JsonNode jsonNode = mapper.readTree(response);
 
@@ -50,13 +50,37 @@ public class StartupRunner implements CommandLineRunner {
 	    System.out.println("Webhook URL: " + webhookUrl);
 	    System.out.println("Access Token: " + accessToken);
 	    
-	 // FINAL SQL QUERY (Question 1)
+	
 	    String finalSqlQuery = """
-	    SELECT *
-	    FROM your_table_name;
+	   SELECT
+    d.DEPARTMENT_NAME,
+    t.total_salary AS SALARY,
+    CONCAT(e.FIRST_NAME, ' ', e.LAST_NAME) AS EMPLOYEE_NAME,
+    TIMESTAMPDIFF(YEAR, e.DOB, CURRENT_DATE) AS AGE
+FROM (
+    SELECT
+        e.EMP_ID,
+        e.DEPARTMENT,
+        SUM(p.AMOUNT) AS total_salary,
+        ROW_NUMBER() OVER (
+            PARTITION BY e.DEPARTMENT
+            ORDER BY SUM(p.AMOUNT) DESC
+        ) AS rn
+    FROM EMPLOYEE e
+    JOIN PAYMENTS p
+        ON e.EMP_ID = p.EMP_ID
+    WHERE DAY(p.PAYMENT_TIME) <> 1
+    GROUP BY e.EMP_ID, e.DEPARTMENT
+) t
+JOIN EMPLOYEE e
+    ON t.EMP_ID = e.EMP_ID
+JOIN DEPARTMENT d
+    ON t.DEPARTMENT = d.DEPARTMENT_ID
+WHERE t.rn = 1;
+
 	    """;
       
-	 // Send final SQL to webhook
+	
 	    HttpHeaders submitHeaders = new HttpHeaders();
 	    submitHeaders.setContentType(MediaType.APPLICATION_JSON);
 	    submitHeaders.set("Authorization", accessToken);
@@ -79,3 +103,4 @@ public class StartupRunner implements CommandLineRunner {
 	}
 
 }
+
